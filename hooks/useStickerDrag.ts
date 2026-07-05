@@ -39,9 +39,19 @@ export function useStickerDrag() {
     );
   }
 
+  function resizeSticker(id: string, size: number) {
+    setStickers((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...s, size: Math.max(24, Math.min(150, size)) }
+          : s
+      )
+    );
+  }
+
   function clearStickers() {
     setStickers([]);
   }
 
-  return { stickers, setStickers, draggingId, setDraggingId, addSticker, deleteSticker, moveSticker, rotateSticker, clearStickers };
+  return { stickers, setStickers, draggingId, setDraggingId, addSticker, deleteSticker, moveSticker, rotateSticker, resizeSticker, clearStickers };
 }

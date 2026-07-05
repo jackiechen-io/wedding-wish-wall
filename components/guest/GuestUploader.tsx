@@ -41,7 +41,7 @@ export default function GuestUploader() {
   const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
 
   const { image, isCompressing, compress, reset } = useImageCompression();
-  const { stickers, draggingId, setDraggingId, addSticker, deleteSticker, moveSticker, rotateSticker, clearStickers } = useStickerDrag();
+  const { stickers, draggingId, setDraggingId, addSticker, deleteSticker, moveSticker, rotateSticker, resizeSticker, clearStickers } = useStickerDrag();
 
   function handleModeChange(newMode: UploadMode) {
     setMode(newMode);
@@ -244,6 +244,12 @@ export default function GuestUploader() {
                 nickname={nickname}
                 gradient={gradient}
                 stickers={stickers}
+                draggingId={draggingId}
+                setDraggingId={setDraggingId}
+                moveSticker={moveSticker}
+                deleteSticker={deleteSticker}
+                rotateSticker={rotateSticker}
+                resizeSticker={resizeSticker}
               />
               <StickerToolbar onAdd={addSticker} usedStickers={stickers.map((s) => s.type)} />
             </>

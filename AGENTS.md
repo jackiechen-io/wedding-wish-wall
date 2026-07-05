@@ -79,3 +79,9 @@ No test framework, config, or test files exist in the project.
 ## No CI/CD
 
 No `.github/`, `Dockerfile`, or deployment config present.
+
+## Deployment reminder
+
+After completing any code changes, ALWAYS ask the user if they want to
+commit & push to deploy. Do not end a work session with uncommitted
+changes without flagging it.
