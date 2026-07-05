@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useMemo } from 'react';
 
 export default function ImageCropEditor({
   file,
@@ -30,7 +30,7 @@ export default function ImageCropEditor({
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [imgNatural, setImgNatural] = useState({ w: 0, h: 0 });
 
-  const previewUrl = URL.createObjectURL(file);
+  const previewUrl = useMemo(() => URL.createObjectURL(file), [file]);
 
   useEffect(() => {
     const img = new Image();

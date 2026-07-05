@@ -21,7 +21,9 @@ export async function GET(req: NextRequest) {
     .from('submissions')
     .select('*');
 
-  if (status && VALID_STATUSES.includes(status as SubmissionStatus)) {
+  if (status === 'all') {
+    // no filter — returns all statuses
+  } else if (status && VALID_STATUSES.includes(status as SubmissionStatus)) {
     query = query.eq('status', status);
   } else {
     query = query.eq('status', 'pending');

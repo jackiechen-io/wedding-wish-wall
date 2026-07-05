@@ -42,7 +42,7 @@ export default function AdminModerationPanel() {
           </div>
         </div>
 
-        <AdminTokenInput token={token} setToken={setToken} onLoad={() => load(token).catch((e) => alert(e.message))} />
+        <AdminTokenInput token={token} setToken={setToken} onLoad={() => load(token, 'pending').catch((e) => alert(e.message))} />
 
         <div className="mt-6">
           {loading && <p className="text-sm text-neutral-400">載入中…</p>}

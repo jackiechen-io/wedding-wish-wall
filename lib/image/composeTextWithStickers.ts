@@ -106,9 +106,9 @@ export async function composeTextWithStickers(params: {
 
   drawGradient(ctx, params.gradient, width, height);
 
-  const paddingX = width * 0.08;
+  const paddingX = width * 0.25;
   const textMaxWidth = width - paddingX * 2;
-  const textMaxHeight = height * 0.6;
+  const textMaxHeight = height * 0.75;
   const lineHeight = 1.4;
 
   const preferredSize = textTf ? (textTf.fontSize / 100) * height : undefined;

@@ -7,10 +7,11 @@ export function useAdminSubmissions() {
   const [rows, setRows] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(false);
 
-  async function load(token: string) {
+  async function load(token: string, status?: string) {
     setLoading(true);
     try {
-      const res = await fetch('/api/admin/submissions', {
+      const params = status ? `?status=${status}` : '';
+      const res = await fetch(`/api/admin/submissions${params}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const json = await res.json();

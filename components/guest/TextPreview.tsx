@@ -247,6 +247,9 @@ export default function TextPreview({
             left: `${textTransform.x}%`,
             top: `${textTransform.y}%`,
             transform: `translate(-50%, -50%) rotate(${textTransform.rotation}deg)`,
+            maxWidth: '85%',
+            width: 'max-content',
+            overflowWrap: 'break-word',
           }}
         >
           {(textSelected || draggingId === '__text__') && (
