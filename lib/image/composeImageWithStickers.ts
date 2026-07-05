@@ -1,5 +1,5 @@
 import type { Sticker } from '@/types/sticker';
-import { STICKER_SVG } from '@/lib/stickers/stickerConfig';
+import { STICKER_PNG } from '@/lib/stickers/stickerConfig';
 import { canvasToBlob } from './canvasToBlob';
 import { HARD_MAX_UPLOAD_BYTES } from './imageUtils';
 
@@ -33,31 +33,18 @@ export async function composeImageWithStickers(params: {
 
   for (const sticker of params.stickers) {
     try {
-      const svgImg = await loadImage(STICKER_SVG[sticker.type]);
+      const pngImg = await loadImage(STICKER_PNG[sticker.type]);
       const stickerSize = Math.round(sticker.size * scale);
 
       ctx.drawImage(
-        svgImg,
+        pngImg,
         (sticker.x / 100) * canvas.width - stickerSize / 2,
         (sticker.y / 100) * canvas.height - stickerSize / 2,
         stickerSize,
         stickerSize
       );
     } catch {
-      const fontSize = Math.round((sticker.size / params.previewWidth) * canvas.width);
-      ctx.save();
-      ctx.font = `${fontSize}px Georgia, "Times New Roman", serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle = '#1f1f1f';
-      ctx.shadowColor = 'rgba(0,0,0,0.15)';
-      ctx.shadowBlur = Math.max(3, fontSize * 0.08);
-      ctx.fillText(
-        sticker.type === 'heart' ? '♡' : sticker.type === 'rings' ? '∞' : sticker.type === 'veil' ? '♕' : '✧',
-        (sticker.x / 100) * canvas.width,
-        (sticker.y / 100) * canvas.height
-      );
-      ctx.restore();
+      // skip sticker if image fails to load
     }
   }
 

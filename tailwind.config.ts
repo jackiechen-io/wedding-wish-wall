@@ -12,6 +12,10 @@ const config: Config = {
       fontFamily: {
         serif: ['Georgia', 'Times New Roman', 'Noto Serif TC', 'serif'],
         sans: ['Inter', 'Noto Sans TC', 'ui-sans-serif', 'system-ui']
+      },
+      screens: {
+        '3xl': '1920px',
+        '4xl': '2560px'
       }
     }
   },

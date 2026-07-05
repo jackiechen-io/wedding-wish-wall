@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { nickname, message, imageKey, imageUrl, contentType, fileSize } = body;
+    const { nickname, message, imageKey, imageUrl, contentType, fileSize, imageWidth, imageHeight } = body;
 
     if (!nickname?.trim() || !message?.trim() || !imageKey || !imageUrl) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
@@ -44,6 +44,8 @@ export async function POST(req: NextRequest) {
         image_url: imageUrl,
         content_type: contentType || 'image/jpeg',
         file_size: fileSize,
+        image_width: imageWidth ?? null,
+        image_height: imageHeight ?? null,
         status: 'pending'
       })
       .select()

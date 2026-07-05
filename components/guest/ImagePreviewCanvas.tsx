@@ -2,7 +2,7 @@
 
 import { RefObject } from 'react';
 import type { Sticker } from '@/types/sticker';
-import { STICKER_SVG } from '@/lib/stickers/stickerConfig';
+import { STICKER_PNG } from '@/lib/stickers/stickerConfig';
 
 export default function ImagePreviewCanvas({
   previewRef,
@@ -56,7 +56,7 @@ export default function ImagePreviewCanvas({
           aria-label="可拖曳貼圖"
         >
           <img
-            src={STICKER_SVG[s.type]}
+            src={STICKER_PNG[s.type]}
             alt="貼圖"
             className="pointer-events-none h-full w-full drop-shadow-sm"
             draggable={false}

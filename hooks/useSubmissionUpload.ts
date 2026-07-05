@@ -12,6 +12,8 @@ export async function uploadSubmission(params: {
   contentType: 'image/webp' | 'image/jpeg';
   stickers: Sticker[];
   previewWidth: number;
+  imageWidth: number;
+  imageHeight: number;
   onProgress?: (value: number, text: string) => void;
 }) {
   params.onProgress?.(20, '正在合成貼圖…');
@@ -59,7 +61,9 @@ export async function uploadSubmission(params: {
       imageKey: uploadPayload.key,
       imageUrl: uploadPayload.publicUrl,
       contentType: params.contentType,
-      fileSize: finalBlob.size
+      fileSize: finalBlob.size,
+      imageWidth: params.imageWidth,
+      imageHeight: params.imageHeight
     })
   });
 

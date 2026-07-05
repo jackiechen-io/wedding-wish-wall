@@ -26,12 +26,20 @@ export default function AdminModerationPanel() {
             <p className="text-xs tracking-[0.4em] text-neutral-400">STAFF ONLY</p>
             <h1 className="mt-2 font-serif text-4xl">Moderation</h1>
           </div>
-          <button
-            onClick={() => exportAll(token)}
-            className="rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm shadow-sm"
-          >
-            Export Approved ZIP
-          </button>
+          <div className="flex gap-2">
+            <a
+              href="/admin/gallery"
+              className="rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm shadow-sm"
+            >
+              Gallery View
+            </a>
+            <button
+              onClick={() => exportAll(token)}
+              className="rounded-2xl border border-neutral-200 bg-white px-5 py-3 text-sm shadow-sm"
+            >
+              Export Approved ZIP
+            </button>
+          </div>
         </div>
 
         <AdminTokenInput token={token} setToken={setToken} onLoad={() => load(token).catch((e) => alert(e.message))} />

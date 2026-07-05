@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next';
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -16,7 +17,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="zh-Hant">
-      <body>{children}</body>
+      <body>
+        <ErrorBoundary>{children}</ErrorBoundary>
+      </body>
     </html>
   );
 }
