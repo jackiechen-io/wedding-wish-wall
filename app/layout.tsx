@@ -1,9 +1,9 @@
 import type { Metadata, Viewport } from 'next';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { ZCOOL_XiaoWei, Ma_Shan_Zheng } from 'next/font/google';
+import { LXGW_WenKai_TC, Ma_Shan_Zheng } from 'next/font/google';
 import './globals.css';
 
-const handwritingFont = ZCOOL_XiaoWei({
+const handwritingFont = LXGW_WenKai_TC({
   weight: '400',
   subsets: ['latin'],
   display: 'swap',

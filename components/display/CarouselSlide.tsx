@@ -21,7 +21,7 @@ export default function CarouselSlide({ item }: { item: DisplaySubmission }) {
         </div>
         <div className="bg-gradient-to-t from-black/60 via-black/30 to-transparent">
           <div className="mx-auto max-w-2xl px-6 pb-8 pt-4 sm:px-10 sm:pb-10 3xl:max-w-4xl">
-            <p className="font-serif text-lg text-white sm:text-xl 3xl:text-3xl">{item.message}</p>
+            <p className="font-handwriting text-lg text-white sm:text-xl 3xl:text-3xl">{item.message}</p>
             <p className="mt-2 text-right text-sm text-white/60 3xl:text-lg">— {item.nickname}</p>
           </div>
         </div>
@@ -32,7 +32,7 @@ export default function CarouselSlide({ item }: { item: DisplaySubmission }) {
   return (
     <div className="flex h-full w-full items-center justify-center p-8 sm:p-16">
       <div className="max-w-xl rounded-2xl bg-white/15 p-8 backdrop-blur-md sm:p-12 3xl:max-w-2xl 3xl:p-16">
-        <p className="text-center font-serif text-2xl leading-relaxed text-white sm:text-4xl 3xl:text-5xl">
+        <p className="text-center font-handwriting text-2xl leading-relaxed text-white sm:text-4xl 3xl:text-5xl">
           {item.message}
         </p>
         <p className="mt-6 text-right text-base text-white/60 sm:mt-8 sm:text-lg 3xl:text-xl">

@@ -30,7 +30,7 @@ export default function PolaroidCard({ item }: { item: DisplaySubmission }) {
         )}
       </div>
       <div className="px-1 pb-2 pt-3">
-        <p className="line-clamp-2 font-serif text-lg text-neutral-800">{item.message}</p>
+        <p className="line-clamp-2 font-handwriting text-lg text-neutral-800">{item.message}</p>
         <p className="mt-1 text-right text-xs text-neutral-400">— {item.nickname}</p>
       </div>
     </article>

@@ -14,7 +14,7 @@ export default function SubmissionReviewCard({
   return (
     <article className="rounded-3xl bg-white p-4 shadow-sm">
       <img src={row.image_url} className="aspect-[4/3] w-full rounded-2xl object-cover" alt={row.message} />
-      <p className="mt-3 font-serif text-lg text-neutral-800">{row.message}</p>
+      <p className="mt-3 font-handwriting text-lg text-neutral-800">{row.message}</p>
       <p className="mt-1 text-sm text-neutral-400">— {row.nickname}</p>
       <p className="mt-2 text-xs text-neutral-400">{Math.round(row.file_size / 1024)} KB · {row.content_type}</p>
 
