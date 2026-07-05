@@ -11,7 +11,8 @@ const config: Config = {
     extend: {
       fontFamily: {
         serif: ['Georgia', 'Times New Roman', 'Noto Serif TC', 'serif'],
-        sans: ['Inter', 'Noto Sans TC', 'ui-sans-serif', 'system-ui']
+        sans: ['Inter', 'Noto Sans TC', 'ui-sans-serif', 'system-ui'],
+        handwriting: ['var(--font-handwriting)', 'ZCOOL XiaoWei', 'Ma Shan Zheng', 'cursive'],
       },
       screens: {
         '3xl': '1920px',

@@ -18,14 +18,14 @@ export default function QRCodeCard({ className, fixed = true }: Props) {
   if (!origin) return null;
 
   return (
-    <div className={`rounded-2xl bg-white p-4 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ${fixed ? 'fixed bottom-6 right-6 z-30 hidden md:block' : ''} ${className ?? ''}`}>
+    <div className={`rounded-2xl bg-white p-5 shadow-[0_8px_30px_rgba(0,0,0,0.12)] ${fixed ? 'fixed bottom-6 right-6 z-30 hidden md:block' : ''} ${className ?? ''}`}>
       <QRCodeSVG
         value={`${origin}/guest`}
-        size={88}
+        size={128}
         level="M"
         className="block"
       />
-      <p className="mt-2 text-center text-[10px] tracking-[0.2em] text-neutral-400">
+      <p className="mt-3 text-center text-xs tracking-[0.2em] text-neutral-400">
         SCAN TO WISH
       </p>
     </div>

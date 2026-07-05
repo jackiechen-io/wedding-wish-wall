@@ -1,8 +1,13 @@
 import type { Sticker } from '@/types/sticker';
+import type { TextTransform } from '@/types/textTransform';
 import type { Gradient } from '@/lib/text/gradients';
 import { STICKER_PNG } from '@/lib/stickers/stickerConfig';
 import { canvasToBlob } from './canvasToBlob';
 import { HARD_MAX_UPLOAD_BYTES } from './imageUtils';
+import { supportsWebp } from './supportsWebp';
+
+const FONT_STACK = "'Ma Shan Zheng','ZCOOL XiaoWei','KaiTi','STKaiti','cjk-ideographic',cursive";
+const CANVAS_SIZE = 800;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -57,12 +62,20 @@ function getOptimalFontSize(
   text: string,
   maxWidth: number,
   maxHeight: number,
-  lineHeight: number
+  lineHeight: number,
+  preferredSize?: number
 ): number {
-  let fontSize = 72;
+  if (preferredSize) {
+    ctx.font = `bold ${preferredSize}px ${FONT_STACK}`;
+    const lines = wrapText(ctx, text, maxWidth);
+    const totalHeight = lines.length * preferredSize * lineHeight;
+    const maxLineWidth = Math.max(...lines.map((l) => ctx.measureText(l).width));
+    if (maxLineWidth <= maxWidth && totalHeight <= maxHeight) return preferredSize;
+  }
+  let fontSize = preferredSize ?? 72;
   const minFontSize = 24;
   while (fontSize > minFontSize) {
-    ctx.font = `bold ${fontSize}px 'Microsoft JhengHei','PingFang TC','Noto Sans TC','Helvetica Neue',sans-serif`;
+    ctx.font = `bold ${fontSize}px ${FONT_STACK}`;
     const lines = wrapText(ctx, text, maxWidth);
     const totalHeight = lines.length * fontSize * lineHeight;
     const maxLineWidth = Math.max(...lines.map((l) => ctx.measureText(l).width));
@@ -77,11 +90,13 @@ export async function composeTextWithStickers(params: {
   nickname: string;
   gradient: Gradient;
   stickers: Sticker[];
+  textTransform?: TextTransform;
   width?: number;
   height?: number;
 }): Promise<Blob> {
-  const width = params.width ?? 1200;
-  const height = params.height ?? 1200;
+  const width = params.width ?? CANVAS_SIZE;
+  const height = params.height ?? CANVAS_SIZE;
+  const textTf = params.textTransform;
 
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -91,34 +106,47 @@ export async function composeTextWithStickers(params: {
 
   drawGradient(ctx, params.gradient, width, height);
 
-  const paddingX = width * 0.1;
-  const paddingTop = height * 0.15;
-  const paddingBottom = height * 0.2;
+  const paddingX = width * 0.08;
   const textMaxWidth = width - paddingX * 2;
-  const textMaxHeight = height - paddingTop - paddingBottom;
-  const lineHeight = 1.5;
+  const textMaxHeight = height * 0.6;
+  const lineHeight = 1.4;
 
-  const fontSize = getOptimalFontSize(ctx, params.message, textMaxWidth, textMaxHeight, lineHeight);
-  ctx.font = `bold ${fontSize}px 'Microsoft JhengHei','PingFang TC','Noto Sans TC','Helvetica Neue',sans-serif`;
+  const preferredSize = textTf ? (textTf.fontSize / 100) * height : undefined;
+  const fontSize = getOptimalFontSize(ctx, params.message, textMaxWidth, textMaxHeight, lineHeight, preferredSize);
+  ctx.font = `bold ${fontSize}px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#333333';
 
   const lines = wrapText(ctx, params.message, textMaxWidth);
   const totalTextHeight = lines.length * fontSize * lineHeight;
-  let startY = (height - totalTextHeight) / 2;
 
-  for (const line of lines) {
-    ctx.fillText(line, width / 2, startY + fontSize * lineHeight / 2);
-    startY += fontSize * lineHeight;
+  if (textTf) {
+    const cx = (textTf.x / 100) * width;
+    const cy = (textTf.y / 100) * height;
+    ctx.save();
+    ctx.translate(cx, cy);
+    if (textTf.rotation) ctx.rotate((textTf.rotation * Math.PI) / 180);
+    let startY = -totalTextHeight / 2 + fontSize * lineHeight / 2;
+    for (const line of lines) {
+      ctx.fillText(line, 0, startY);
+      startY += fontSize * lineHeight;
+    }
+    ctx.restore();
+  } else {
+    let startY = (height - totalTextHeight) / 2;
+    for (const line of lines) {
+      ctx.fillText(line, width / 2, startY + fontSize * lineHeight / 2);
+      startY += fontSize * lineHeight;
+    }
   }
 
-  const nickFontSize = Math.min(28, width * 0.03);
-  ctx.font = `${nickFontSize}px 'Microsoft JhengHei','PingFang TC','Noto Sans TC','Helvetica Neue',sans-serif`;
+  const nickFontSize = Math.min(24, width * 0.04);
+  ctx.font = `${nickFontSize}px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';
   ctx.fillStyle = '#666666';
-  ctx.fillText(`— ${params.nickname} —`, width / 2, height - paddingBottom * 0.5);
+  ctx.fillText(`— ${params.nickname} —`, width / 2, height - height * 0.08);
 
   for (const sticker of params.stickers) {
     try {
@@ -137,12 +165,14 @@ export async function composeTextWithStickers(params: {
     }
   }
 
-  let blob = await canvasToBlob(canvas, 'image/webp', 0.85);
-  if (blob.size > HARD_MAX_UPLOAD_BYTES) {
-    blob = await canvasToBlob(canvas, 'image/webp', 0.75);
-  }
-  if (blob.size > HARD_MAX_UPLOAD_BYTES) {
-    blob = await canvasToBlob(canvas, 'image/webp', 0.6);
+  const useWebp = await supportsWebp();
+  const outputType = useWebp ? 'image/webp' : 'image/jpeg';
+
+  let blob = await canvasToBlob(canvas, outputType, 0.85);
+  const qualities = useWebp ? [0.75, 0.6, 0.5] : [0.7, 0.5, 0.35];
+  for (const q of qualities) {
+    if (blob.size <= HARD_MAX_UPLOAD_BYTES) break;
+    blob = await canvasToBlob(canvas, outputType, q);
   }
 
   return blob;

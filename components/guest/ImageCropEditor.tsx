@@ -222,6 +222,8 @@ export default function ImageCropEditor({
     if (!ctx) return;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, outputSize, outputSize);
     ctx.drawImage(
       imgRef.current,
       srcX, srcY,

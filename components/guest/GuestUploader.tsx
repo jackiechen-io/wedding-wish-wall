@@ -10,6 +10,7 @@ import StickerToolbar from './StickerToolbar';
 import UploadProgress from './UploadProgress';
 import { useImageCompression } from '@/hooks/useImageCompression';
 import { useStickerDrag } from '@/hooks/useStickerDrag';
+import { useTextTransform } from '@/hooks/useTextTransform';
 import { uploadSubmission } from '@/hooks/useSubmissionUpload';
 import { getFileSizeLabel } from '@/lib/image/imageUtils';
 import { GRADIENTS } from '@/lib/text/gradients';
@@ -42,6 +43,7 @@ export default function GuestUploader() {
 
   const { image, isCompressing, compress, reset } = useImageCompression();
   const { stickers, draggingId, setDraggingId, addSticker, deleteSticker, moveSticker, rotateSticker, resizeSticker, clearStickers } = useStickerDrag();
+  const { textTransform, moveText, rotateText, resizeText, resetTextTransform } = useTextTransform();
 
   function handleModeChange(newMode: UploadMode) {
     setMode(newMode);
@@ -107,16 +109,17 @@ export default function GuestUploader() {
           nickname: nickname.trim(),
           gradient,
           stickers,
-          width: 1200,
-          height: 1200,
+          textTransform,
+          width: 800,
+          height: 800,
         });
 
         await uploadSubmission({
           nickname: nickname.trim(),
           message: message.trim(),
           blob,
-          imageWidth: 1200,
-          imageHeight: 1200,
+          imageWidth: 800,
+          imageHeight: 800,
           contentType: 'image/webp',
           onProgress: (value, text) => {
             setProgress(value);
@@ -147,6 +150,7 @@ export default function GuestUploader() {
       setMessage('');
       reset();
       clearStickers();
+      resetTextTransform();
       setGradient(GRADIENTS[0]);
     } catch (error) {
       setSubmitStatus('error');
@@ -243,6 +247,10 @@ export default function GuestUploader() {
                 message={message}
                 nickname={nickname}
                 gradient={gradient}
+                textTransform={textTransform}
+                onMoveText={moveText}
+                onRotateText={rotateText}
+                onResizeText={resizeText}
                 stickers={stickers}
                 draggingId={draggingId}
                 setDraggingId={setDraggingId}
