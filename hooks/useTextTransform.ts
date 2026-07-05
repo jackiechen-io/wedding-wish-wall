@@ -25,7 +25,7 @@ export function useTextTransform() {
   function resizeText(fontSize: number) {
     setTextTransform((prev) => ({
       ...prev,
-      fontSize: Math.max(24, Math.min(120, fontSize)),
+      fontSize: Math.max(32, Math.min(120, fontSize)),
     }));
   }
 

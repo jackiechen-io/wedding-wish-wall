@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { nickname, message, imageKey, imageUrl, contentType, fileSize, imageWidth, imageHeight } = body;
+    const { nickname, message, hashtag, imageKey, imageUrl, contentType, fileSize, imageWidth, imageHeight } = body;
 
     if (!nickname?.trim() || !message?.trim() || !imageKey || !imageUrl) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
@@ -20,6 +20,8 @@ export async function POST(req: NextRequest) {
     if (message.length > 300) {
       return NextResponse.json({ message: '祝福不得超過300個字' }, { status: 400 });
     }
+
+    const cleanHashtag = typeof hashtag === 'string' ? hashtag.trim().replace(/^#/, '') : '';
 
     if (fileSize > 450 * 1024) {
       return NextResponse.json({ message: '圖片檔案過大' }, { status: 400 });
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
       .insert({
         nickname: nickname.trim(),
         message: message.trim(),
+        hashtag: cleanHashtag,
         image_key: imageKey,
         image_url: imageUrl,
         content_type: contentType || 'image/jpeg',

@@ -118,7 +118,7 @@ export default function TextPreview({
     function onMove(e: PointerEvent) {
       if (!textResizeRef.current) return;
       const dy = e.clientY - textResizeRef.current.startY;
-      const newSize = Math.max(24, Math.min(120, textResizeRef.current.startSize + dy * 0.5));
+      const newSize = Math.max(32, Math.min(120, textResizeRef.current.startSize + dy * 0.5));
       onResizeText(newSize);
     }
     function onUp() {

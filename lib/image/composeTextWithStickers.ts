@@ -6,7 +6,7 @@ import { canvasToBlob } from './canvasToBlob';
 import { HARD_MAX_UPLOAD_BYTES } from './imageUtils';
 import { supportsWebp } from './supportsWebp';
 
-const FONT_STACK = "'Ma Shan Zheng','ZCOOL XiaoWei','KaiTi','STKaiti','cjk-ideographic',cursive";
+const FONT_STACK = "'ZCOOL XiaoWei','Noto Serif TC','Ma Shan Zheng','KaiTi','STKaiti',serif";
 const CANVAS_SIZE = 800;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -73,7 +73,7 @@ function getOptimalFontSize(
     if (maxLineWidth <= maxWidth && totalHeight <= maxHeight) return preferredSize;
   }
   let fontSize = preferredSize ?? 72;
-  const minFontSize = 24;
+  const minFontSize = 32;
   while (fontSize > minFontSize) {
     ctx.font = `bold ${fontSize}px ${FONT_STACK}`;
     const lines = wrapText(ctx, text, maxWidth);
@@ -141,7 +141,7 @@ export async function composeTextWithStickers(params: {
     }
   }
 
-  const nickFontSize = Math.min(24, width * 0.04);
+  const nickFontSize = Math.min(28, width * 0.04);
   ctx.font = `${nickFontSize}px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'bottom';

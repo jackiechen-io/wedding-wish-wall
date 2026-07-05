@@ -1,13 +1,20 @@
 import type { Metadata, Viewport } from 'next';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
-import { Ma_Shan_Zheng } from 'next/font/google';
+import { ZCOOL_XiaoWei, Ma_Shan_Zheng } from 'next/font/google';
 import './globals.css';
 
-const handwritingFont = Ma_Shan_Zheng({
+const handwritingFont = ZCOOL_XiaoWei({
   weight: '400',
   subsets: ['latin'],
   display: 'swap',
   variable: '--font-handwriting',
+});
+
+const maShanZheng = Ma_Shan_Zheng({
+  weight: '400',
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-maszheng',
 });
 
 export const metadata: Metadata = {
@@ -24,7 +31,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="zh-Hant" className={`${handwritingFont.variable}`}>
+    <html lang="zh-Hant" className={`${handwritingFont.variable} ${maShanZheng.variable}`}>
       <body>
         <ErrorBoundary>{children}</ErrorBoundary>
       </body>

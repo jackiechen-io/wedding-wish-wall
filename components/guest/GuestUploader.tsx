@@ -20,6 +20,7 @@ import { composeTextWithStickers } from '@/lib/image/composeTextWithStickers';
 type FieldErrors = {
   nickname?: string;
   message?: string;
+  hashtag?: string;
   image?: string;
 };
 
@@ -30,6 +31,7 @@ export default function GuestUploader() {
   const [mode, setMode] = useState<UploadMode>('text');
   const [nickname, setNickname] = useState('');
   const [message, setMessage] = useState('');
+  const [hashtag, setHashtag] = useState('');
   const [progress, setProgress] = useState(0);
   const [loadingText, setLoadingText] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -117,6 +119,7 @@ export default function GuestUploader() {
         await uploadSubmission({
           nickname: nickname.trim(),
           message: message.trim(),
+          hashtag: hashtag.trim(),
           blob,
           imageWidth: 800,
           imageHeight: 800,
@@ -132,6 +135,7 @@ export default function GuestUploader() {
         await uploadSubmission({
           nickname: nickname.trim(),
           message: message.trim(),
+          hashtag: hashtag.trim(),
           previewUrl: image.previewUrl,
           contentType: image.contentType,
           stickers,
@@ -148,6 +152,7 @@ export default function GuestUploader() {
       setSubmitStatus('success');
       setNickname('');
       setMessage('');
+      setHashtag('');
       reset();
       clearStickers();
       resetTextTransform();
@@ -238,6 +243,21 @@ export default function GuestUploader() {
             {errors.message && <p className="mt-1 text-xs text-red-500">{errors.message}</p>}
           </div>
 
+          { /* Hashtag field */ }
+          <div>
+            <label className="text-xs text-neutral-400">標籤（選填，顯示在螢幕上）</label>
+            <input
+              className={`mt-1 w-full rounded-2xl border px-4 py-3 outline-none ${
+                errors.hashtag ? 'border-red-300 bg-red-50' : 'border-neutral-200 bg-[#F8F9FA] focus:border-neutral-400'
+              }`}
+              placeholder="#祝福 #婚禮"
+              value={hashtag}
+              maxLength={50}
+              onChange={(e) => { setHashtag(e.target.value); setErrors((prev) => ({ ...prev, hashtag: undefined })); }}
+            />
+            {errors.hashtag && <p className="mt-1 text-xs text-red-500">{errors.hashtag}</p>}
+          </div>
+
           {mode === 'text' ? (
             <>
               <div>
@@ -319,6 +339,7 @@ export default function GuestUploader() {
                         moveSticker={moveSticker}
                         deleteSticker={deleteSticker}
                         rotateSticker={rotateSticker}
+                        resizeSticker={resizeSticker}
                       />
                       <StickerToolbar onAdd={addSticker} usedStickers={stickers.map((s) => s.type)} />
                       <p className="text-xs text-neutral-400">

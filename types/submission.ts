@@ -4,6 +4,7 @@ export type Submission = {
   id: string;
   nickname: string;
   message: string;
+  hashtag: string;
   image_key: string;
   image_url: string;
   content_type: 'image/webp' | 'image/jpeg';
@@ -17,4 +18,4 @@ export type Submission = {
   approved_by: string | null;
 };
 
-export type PublicSubmission = Pick<Submission, 'id' | 'nickname' | 'message' | 'image_url' | 'image_width' | 'image_height' | 'created_at' | 'approved_at'>;
+export type PublicSubmission = Pick<Submission, 'id' | 'nickname' | 'message' | 'hashtag' | 'image_url' | 'image_width' | 'image_height' | 'created_at' | 'approved_at'>;

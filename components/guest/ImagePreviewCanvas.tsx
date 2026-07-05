@@ -12,7 +12,8 @@ export default function ImagePreviewCanvas({
   setDraggingId,
   moveSticker,
   deleteSticker,
-  rotateSticker
+  rotateSticker,
+  resizeSticker
 }: {
   previewRef: RefObject<HTMLDivElement | null>;
   previewUrl: string;
@@ -22,6 +23,7 @@ export default function ImagePreviewCanvas({
   moveSticker: (id: string, x: number, y: number) => void;
   deleteSticker: (id: string) => void;
   rotateSticker: (id: string, angle: number) => void;
+  resizeSticker: (id: string, size: number) => void;
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [zoom, setZoom] = useState({ scale: 1, tx: 0, ty: 0 });
@@ -32,6 +34,7 @@ export default function ImagePreviewCanvas({
   const pinchRef = useRef<{ dist: number; scale: number } | null>(null);
   const panRef = useRef<{ sx: number; sy: number; tx: number; ty: number } | null>(null);
   const rotateRef = useRef<{ id: string; sa: number; angle: number; cx: number; cy: number } | null>(null);
+  const resizeRef = useRef<{ id: string; startSize: number; startY: number } | null>(null);
   const draggingIdRef = useRef(draggingId);
   draggingIdRef.current = draggingId;
 
@@ -70,9 +73,31 @@ export default function ImagePreviewCanvas({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [!!rotateRef.current]);
 
+  // --- Document-level resize handler via useEffect ---
+  useEffect(() => {
+    if (!resizeRef.current) return;
+    function onMove(e: PointerEvent) {
+      if (!resizeRef.current) return;
+      const dy = e.clientY - resizeRef.current.startY;
+      const newSize = Math.max(24, Math.min(150, resizeRef.current.startSize + dy * 0.3));
+      resizeSticker(resizeRef.current.id, newSize);
+    }
+    function onUp() {
+      setDraggingId(null);
+      resizeRef.current = null;
+    }
+    document.addEventListener('pointermove', onMove);
+    document.addEventListener('pointerup', onUp);
+    return () => {
+      document.removeEventListener('pointermove', onMove);
+      document.removeEventListener('pointerup', onUp);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [!!resizeRef.current]);
+
   // --- Sticker drag ---
   function onPointerMove(e: React.PointerEvent<HTMLDivElement>) {
-    if (!container || !draggingId || rotateRef.current) return;
+    if (!container || !draggingId || rotateRef.current || resizeRef.current) return;
     const rect = container.getBoundingClientRect();
     moveSticker(
       draggingId,
@@ -82,7 +107,7 @@ export default function ImagePreviewCanvas({
   }
 
   function onPointerUp() {
-    if (rotateRef.current) return;
+    if (rotateRef.current || resizeRef.current) return;
     setDraggingId(null);
     panRef.current = null;
   }
@@ -100,6 +125,7 @@ export default function ImagePreviewCanvas({
 
   // --- Sticker selection + drag start ---
   function onStickerPointerDown(e: React.PointerEvent, id: string) {
+    e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
     setSelectedId(id);
     setDraggingId(id);
@@ -115,6 +141,16 @@ export default function ImagePreviewCanvas({
     const cx = rect.left + (sticker.x / 100) * rect.width;
     const cy = rect.top + (sticker.y / 100) * rect.height;
     rotateRef.current = { id, sa: Math.atan2(e.clientY - cy, e.clientX - cx), angle: sticker.rotation, cx, cy };
+    setDraggingId(id);
+  }
+
+  // --- Resize handle ---
+  function onResizePointerDown(e: React.PointerEvent, id: string) {
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const sticker = stickers.find((s) => s.id === id);
+    if (!sticker) return;
+    resizeRef.current = { id, startSize: sticker.size, startY: e.clientY };
     setDraggingId(id);
   }
 
@@ -226,6 +262,20 @@ export default function ImagePreviewCanvas({
               >
                 <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            )}
+
+            {/* Resize handle */}
+            {(selectedId === s.id || draggingId === s.id) && (
+              <button
+                type="button"
+                className="absolute -bottom-3 -right-3 z-10 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-neutral-900/60 text-white shadow-md transition active:scale-90"
+                onPointerDown={(e) => onResizePointerDown(e, s.id)}
+                aria-label="縮放貼圖"
+              >
+                <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                 </svg>
               </button>
             )}

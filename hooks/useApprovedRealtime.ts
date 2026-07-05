@@ -21,7 +21,7 @@ export function useApprovedRealtime() {
     async function loadInitial() {
       const { data } = await supabase
         .from('submissions')
-        .select('id,nickname,message,image_url,image_width,image_height,created_at,approved_at')
+        .select('id,nickname,message,hashtag,image_url,image_width,image_height,created_at,approved_at')
         .eq('status', 'approved')
         .order('approved_at', { ascending: false })
         .limit(MAX_ITEMS);

@@ -8,6 +8,7 @@ import { getFileSizeLabel, HARD_MAX_UPLOAD_BYTES } from '@/lib/image/imageUtils'
 export async function uploadSubmission(params: {
   nickname: string;
   message: string;
+  hashtag?: string;
   blob?: Blob;
   contentType?: string;
   imageWidth?: number;
@@ -76,6 +77,7 @@ export async function uploadSubmission(params: {
     body: JSON.stringify({
       nickname: params.nickname,
       message: params.message,
+      hashtag: params.hashtag || '',
       imageKey: uploadPayload.key,
       imageUrl: uploadPayload.publicUrl,
       contentType: finalContentType,
