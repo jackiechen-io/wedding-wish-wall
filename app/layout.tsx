@@ -3,7 +3,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Wedding Wishes Wall',
+  title: '威丞&蕙如的婚禮祝福牆',
   description: 'A minimalist wedding wishes photo wall.'
 };
 

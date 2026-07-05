@@ -18,9 +18,9 @@ export function getCanvasSize(width: number, height: number, maxLongEdge: number
   };
 }
 
-export function loadImageFromFile(file: File): Promise<HTMLImageElement> {
+export function loadImageFromBlob(blob: Blob): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
+    const url = URL.createObjectURL(blob);
     const img = new Image();
     img.onload = () => {
       URL.revokeObjectURL(url);
@@ -29,6 +29,10 @@ export function loadImageFromFile(file: File): Promise<HTMLImageElement> {
     img.onerror = reject;
     img.src = url;
   });
+}
+
+export function loadImageFromFile(file: File): Promise<HTMLImageElement> {
+  return loadImageFromBlob(file);
 }
 
 export function loadImageFromUrl(url: string): Promise<HTMLImageElement> {

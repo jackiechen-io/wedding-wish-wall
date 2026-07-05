@@ -2,11 +2,23 @@
 
 ## Stack
 
-Next.js 15 (App Router), React 19, TypeScript 5, Tailwind CSS 3, Supabase (Postgres + Realtime), Cloudflare R2 (S3-compatible).
+Next.js 15 (App Router), React 19, TypeScript 5, Tailwind CSS 3, Supabase (Postgres + Storage + Realtime).
 
 ## Project structure
 
-All source files are flat at the root (`./page.tsx`, `./layout.tsx`, `./MainDisplay.tsx`, etc.) — no `app/`, `components/`, `lib/`, `hooks/`, or `scripts/` directories exist despite `tailwind.config.ts` referencing them and source files using `@/<subdir>/<file>` imports. The `@/*` path alias (`tsconfig.json`) maps to `./*`, so imports like `@/lib/supabase/browserClient` fail to resolve (actual file: `./browserClient.ts`). **The project cannot compile as-is** — before building, either (a) restructure files into matching subdirectories or (b) fix import paths.
+Source files are organized in standard subdirectories:
+
+```
+app/          # Next.js App Router pages & API routes
+components/   # React components (display/, guest/, admin/, ui/)
+hooks/        # Custom React hooks
+lib/          # Shared utilities (supabase/, image/, text/, auth/)
+public/       # Static assets (background.webp, stickers/)
+scripts/      # Dev scripts (check-env.ts, generate-admin-token.ts)
+types/        # TypeScript type definitions
+```
+
+All `@/*` path aliases (`tsconfig.json` maps `@/*` → `./*`) resolve correctly against these subdirectories.
 
 ## Routes
 
@@ -30,18 +42,16 @@ npm run generate-admin-token  # tsx scripts/generate-admin-token.ts
 
 `tsx` is used for scripts; no `nodemon` or custom watchers.
 
-## Env vars (9 required)
+## Env vars (4 required)
 
 See `.env.example`. All required or the app silently fails at runtime:
-- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
-- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`, `R2_PUBLIC_BASE_URL`
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`
 - `ADMIN_TOKEN` (64 hex chars, generated via `npm run generate-admin-token`)
-- `LINE_CHANNEL_ID`, `LINE_CHANNEL_SECRET`, `LINE_REDIRECT_URI` (optional, for LINE login)
 
 ## Architecture & data flow
 
 1. **Guest upload**: `GuestUploader.tsx` — client compresses image via `<canvas>` (WebP preferred, fallback JPEG; target ≤400 KB, hard max 450 KB; max 1200px long edge), user drags Unicode stickers, final blob composed via `composeImageWithStickers.ts`
-2. **Upload to R2**: POST `/api/upload-url` returns R2 signed URL → browser PUTs blob directly to Cloudflare R2
+2. **Upload to Supabase Storage**: POST `/api/upload-url` returns signed URL → browser PUTs blob directly to Supabase Storage
 3. **Save submission**: POST `/api/submissions` inserts row into `public.submissions` with status `pending`
 4. **Moderation**: `AdminModerationPanel.tsx` — staff enters admin token → fetches pending submissions from GET `/api/admin/submissions` → approve/reject/delete via POST `/api/admin/moderate` → export approved as ZIP
 5. **Display wall**: `MainDisplay.tsx` + `useApprovedRealtime.ts` — loads last 28 approved + subscribes to Supabase Realtime for new approvals (UPDATE events on `status=eq.approved`)
@@ -53,12 +63,6 @@ See `.env.example`. All required or the app silently fails at runtime:
 - **Constraints**: nickname 1–30 chars, message 1–300 chars, file_size ≤450000
 - **RLS**: only `SELECT` for `status = 'approved'` is public — all writes go through API routes using `SUPABASE_SERVICE_ROLE_KEY`
 - **Realtime**: `supabase_realtime` publication must include `public.submissions`; frontend listens for `UPDATE` on `status=eq.approved`
-
-## Cloudflare R2
-
-- S3-compatible API, `client.ts` creates `S3Client` with region `auto`
-- Uploads go to `wedding/{date}/{uuid}.{ext}` keys
-- R2 bucket CORS must allow `PUT` from your domain
 
 ## Key constraints
 

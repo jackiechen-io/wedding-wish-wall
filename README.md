@@ -7,7 +7,7 @@
 - Mobile guest upload page
 - Canvas/WebP client-side image compression
 - Draggable wedding stickers
-- R2 signed URL direct upload
+- Supabase Storage direct upload
 - Supabase Postgres moderation status
 - Admin approve/reject/delete
 - Supabase Realtime main display wall
@@ -39,14 +39,6 @@ supabase/migrations/001_create_submissions.sql
 
 Make sure Realtime is enabled for `public.submissions`.
 
-## Cloudflare R2
-
-Create a bucket and S3 API token. Configure a public domain or custom domain and set:
-
-```bash
-R2_PUBLIC_BASE_URL=https://your-public-r2-domain.example.com
-```
-
 ## Local development
 
 ```bash
@@ -58,5 +50,4 @@ npm run dev
 - Use HTTPS
 - Use a strong `ADMIN_TOKEN`
 - Keep `SUPABASE_SERVICE_ROLE_KEY` server-only
-- Confirm R2 CORS allows browser `PUT` from your domain
 - Test iOS Safari and Android Chrome image compression

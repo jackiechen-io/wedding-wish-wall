@@ -1,13 +1,20 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import UploadModeTabs, { type UploadMode } from './UploadModeTabs';
+import TextPreview from './TextPreview';
+import GradientPicker from './GradientPicker';
 import ImagePreviewCanvas from './ImagePreviewCanvas';
+import ImageCropEditor from './ImageCropEditor';
 import StickerToolbar from './StickerToolbar';
 import UploadProgress from './UploadProgress';
 import { useImageCompression } from '@/hooks/useImageCompression';
 import { useStickerDrag } from '@/hooks/useStickerDrag';
 import { uploadSubmission } from '@/hooks/useSubmissionUpload';
 import { getFileSizeLabel } from '@/lib/image/imageUtils';
+import { GRADIENTS } from '@/lib/text/gradients';
+import type { Gradient } from '@/lib/text/gradients';
+import { composeTextWithStickers } from '@/lib/image/composeTextWithStickers';
 
 type FieldErrors = {
   nickname?: string;
@@ -19,6 +26,7 @@ type SubmitStatus = 'idle' | 'success' | 'error';
 
 export default function GuestUploader() {
   const previewRef = useRef<HTMLDivElement | null>(null);
+  const [mode, setMode] = useState<UploadMode>('text');
   const [nickname, setNickname] = useState('');
   const [message, setMessage] = useState('');
   const [progress, setProgress] = useState(0);
@@ -28,11 +36,20 @@ export default function GuestUploader() {
   const [submitStatus, setSubmitStatus] = useState<SubmitStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   const inputRef = useRef<HTMLInputElement | null>(null);
-
   const [isDragOver, setIsDragOver] = useState(false);
+  const [gradient, setGradient] = useState<Gradient>(GRADIENTS[0]);
+  const [pendingCropFile, setPendingCropFile] = useState<File | null>(null);
 
   const { image, isCompressing, compress, reset } = useImageCompression();
-  const { stickers, draggingId, setDraggingId, addSticker, moveSticker, clearStickers } = useStickerDrag();
+  const { stickers, draggingId, setDraggingId, addSticker, deleteSticker, moveSticker, rotateSticker, clearStickers } = useStickerDrag();
+
+  function handleModeChange(newMode: UploadMode) {
+    setMode(newMode);
+    if (newMode === 'text') {
+      reset();
+      setPendingCropFile(null);
+    }
+  }
 
   function validate(): boolean {
     const e: FieldErrors = {};
@@ -40,61 +57,97 @@ export default function GuestUploader() {
     else if (nickname.length > 30) e.nickname = '暱稱不得超過30個字';
     if (!message.trim()) e.message = '請填寫祝福';
     else if (message.length > 300) e.message = '祝福不得超過300個字';
-    if (!image) e.image = '請選擇照片';
+    if (mode === 'photo' && !image) e.image = '請選擇照片';
     setErrors(e);
     return Object.keys(e).length === 0;
   }
 
-  async function onPickFile(file?: File) {
+  function onPickFile(file?: File) {
     if (!file) return;
+    setPendingCropFile(file);
+  }
+
+  function handleCropComplete(croppedBlob: Blob) {
+    setPendingCropFile(null);
     setSubmitting(true);
     setLoadingText('正在將照片變成輕盈的小卡片…');
     setProgress(20);
 
-    try {
-      const result = await compress(file);
-      setProgress(100);
-      setLoadingText(`壓縮完成：${getFileSizeLabel(result.blob.size)}`);
-      setErrors((prev) => ({ ...prev, image: undefined }));
-    } catch (error) {
-      setErrors((prev) => ({ ...prev, image: error instanceof Error ? error.message : '圖片處理失敗' }));
-    } finally {
-      setTimeout(() => {
-        setSubmitting(false);
-        setLoadingText('');
-        setProgress(0);
-      }, 700);
-    }
+    const croppedFile = new File([croppedBlob], 'cropped.jpg', { type: 'image/jpeg' });
+
+    compress(croppedFile)
+      .then((result) => {
+        setProgress(100);
+        setLoadingText(`壓縮完成：${getFileSizeLabel(result.blob.size)}`);
+        setErrors((prev) => ({ ...prev, image: undefined }));
+      })
+      .catch((error) => {
+        setErrors((prev) => ({ ...prev, image: error instanceof Error ? error.message : '圖片處理失敗' }));
+      })
+      .finally(() => {
+        setTimeout(() => {
+          setSubmitting(false);
+          setLoadingText('');
+          setProgress(0);
+        }, 700);
+      });
   }
 
   async function submit() {
     if (!validate()) return;
-    if (!image || !previewRef.current) return;
 
     setSubmitting(true);
     setSubmitStatus('idle');
     setErrorMessage('');
+
     try {
-      await uploadSubmission({
-        nickname,
-        message,
-        previewUrl: image.previewUrl,
-        contentType: image.contentType,
-        stickers,
-        previewWidth: previewRef.current.clientWidth,
-        imageWidth: image.width,
-        imageHeight: image.height,
-        onProgress: (value, text) => {
-          setProgress(value);
-          setLoadingText(text);
-        }
-      });
+      if (mode === 'text') {
+        const blob = await composeTextWithStickers({
+          message: message.trim(),
+          nickname: nickname.trim(),
+          gradient,
+          stickers,
+          width: 1200,
+          height: 1200,
+        });
+
+        await uploadSubmission({
+          nickname: nickname.trim(),
+          message: message.trim(),
+          blob,
+          imageWidth: 1200,
+          imageHeight: 1200,
+          contentType: 'image/webp',
+          onProgress: (value, text) => {
+            setProgress(value);
+            setLoadingText(text);
+          },
+        });
+      } else {
+        if (!image || !previewRef.current) return;
+
+        await uploadSubmission({
+          nickname: nickname.trim(),
+          message: message.trim(),
+          previewUrl: image.previewUrl,
+          contentType: image.contentType,
+          stickers,
+          previewWidth: previewRef.current.clientWidth,
+          imageWidth: image.width,
+          imageHeight: image.height,
+          onProgress: (value, text) => {
+            setProgress(value);
+            setLoadingText(text);
+          },
+        });
+      }
 
       setSubmitStatus('success');
       setNickname('');
       setMessage('');
       reset();
       clearStickers();
+      setGradient(GRADIENTS[0]);
     } catch (error) {
       setSubmitStatus('error');
       setErrorMessage(error instanceof Error ? error.message : '送出失敗');
@@ -135,8 +188,12 @@ export default function GuestUploader() {
     <main className="min-h-screen bg-white text-neutral-900">
       <section className="mx-auto max-w-md px-5 py-8">
         <p className="text-xs tracking-[0.4em] text-neutral-400">WEDDING WALL</p>
-        <h1 className="mt-2 font-serif text-4xl tracking-wide">Wedding Wishes</h1>
+        <h1 className="mt-2 font-serif text-xl tracking-wide sm:text-2xl md:text-3xl whitespace-nowrap">威丞&amp;蕙如的婚禮祝福牆</h1>
         <p className="mt-2 text-sm leading-6 text-neutral-500">留下一張照片與一句溫柔的祝福，審核通過後會出現在現場大螢幕。</p>
+
+        <div className="mt-8">
+          <UploadModeTabs mode={mode} onChange={handleModeChange} />
+        </div>
 
         <div className="mt-8 space-y-4">
           <div>
@@ -177,88 +234,111 @@ export default function GuestUploader() {
             {errors.message && <p className="mt-1 text-xs text-red-500">{errors.message}</p>}
           </div>
 
-          <div>
-            <label
-              className={`block rounded-2xl border-2 border-dashed px-4 py-6 text-center text-sm transition ${
-                errors.image
-                  ? 'border-red-300 bg-red-50'
-                  : isDragOver
-                    ? 'border-neutral-900 bg-neutral-50'
-                    : image
-                      ? 'border-green-300 bg-green-50'
-                      : 'border-neutral-300 bg-[#F8F9FA] text-neutral-500 active:scale-[0.99]'
-              }`}
-              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
-              onDragLeave={() => setIsDragOver(false)}
-              onDrop={(e) => { e.preventDefault(); setIsDragOver(false); onPickFile(e.dataTransfer.files?.[0]); }}
-            >
-              {image ? (
-                <span className="text-green-600">✓ 已選擇照片（點擊更換）</span>
-              ) : (
-                <>
-                  <span className="block">{isDragOver ? '放開以上傳' : '點擊選擇照片'}</span>
-                  <span className="mt-1 block text-xs text-neutral-400">或拖放照片到此區域，本機壓縮後才上傳</span>
-                </>
-              )}
-              <input
-                ref={inputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                disabled={submitting || isCompressing}
-                onChange={(e) => onPickFile(e.target.files?.[0])}
-              />
-            </label>
-            {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
-          </div>
-
-          <UploadProgress text={loadingText} progress={progress} />
-
-          {image && (
+          {mode === 'text' ? (
             <>
-              <ImagePreviewCanvas
-                previewRef={previewRef}
-                previewUrl={image.previewUrl}
+              <div>
+                <GradientPicker selected={gradient} onChange={setGradient} />
+              </div>
+              <TextPreview
+                message={message}
+                nickname={nickname}
+                gradient={gradient}
                 stickers={stickers}
-                draggingId={draggingId}
-                setDraggingId={setDraggingId}
-                moveSticker={moveSticker}
               />
               <StickerToolbar onAdd={addSticker} usedStickers={stickers.map((s) => s.type)} />
-              <p className="text-xs text-neutral-400">
-                已轉為 {image.contentType.replace('image/', '').toUpperCase()}，大小約 {getFileSizeLabel(image.blob.size)}
-              </p>
-              <button
-                type="button"
-                onClick={() => { reset(); clearStickers(); }}
-                className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm text-neutral-400 active:scale-[0.99]"
-              >
-                清除照片重選
-              </button>
+            </>
+          ) : (
+            <>
+              {pendingCropFile ? (
+                <ImageCropEditor
+                  file={pendingCropFile}
+                  onCrop={handleCropComplete}
+                  onCancel={() => setPendingCropFile(null)}
+                />
+              ) : (
+                <>
+                  <div>
+                    <label
+                      className={`block rounded-2xl border-2 border-dashed px-4 py-6 text-center text-sm transition ${
+                        errors.image
+                          ? 'border-red-300 bg-red-50'
+                          : isDragOver
+                            ? 'border-neutral-900 bg-neutral-50'
+                            : image
+                              ? 'border-green-300 bg-green-50'
+                              : 'border-neutral-300 bg-[#F8F9FA] text-neutral-500 active:scale-[0.99]'
+                      }`}
+                      onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+                      onDragLeave={() => setIsDragOver(false)}
+                      onDrop={(e) => { e.preventDefault(); setIsDragOver(false); onPickFile(e.dataTransfer.files?.[0]); }}
+                    >
+                      {image ? (
+                        <span className="text-green-600">✓ 已選擇照片（點擊更換）</span>
+                      ) : (
+                        <>
+                          <span className="block">{isDragOver ? '放開以上傳' : '點擊選擇照片'}</span>
+                          <span className="mt-1 block text-xs text-neutral-400">或拖放照片到此區域，本機壓縮後才上傳</span>
+                        </>
+                      )}
+                      <input
+                        ref={inputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={submitting || isCompressing}
+                        onChange={(e) => onPickFile(e.target.files?.[0])}
+                      />
+                    </label>
+                    {errors.image && <p className="mt-1 text-xs text-red-500">{errors.image}</p>}
+                  </div>
+
+                  <UploadProgress text={loadingText} progress={progress} />
+
+                  {image && (
+                    <>
+                      <ImagePreviewCanvas
+                        previewRef={previewRef}
+                        previewUrl={image.previewUrl}
+                        stickers={stickers}
+                        draggingId={draggingId}
+                        setDraggingId={setDraggingId}
+                        moveSticker={moveSticker}
+                        deleteSticker={deleteSticker}
+                        rotateSticker={rotateSticker}
+                      />
+                      <StickerToolbar onAdd={addSticker} usedStickers={stickers.map((s) => s.type)} />
+                      <p className="text-xs text-neutral-400">
+                        已轉為 {image.contentType.replace('image/', '').toUpperCase()}，大小約 {getFileSizeLabel(image.blob.size)}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => { reset(); clearStickers(); }}
+                        className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm text-neutral-400 active:scale-[0.99]"
+                      >
+                        清除照片重選
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
             </>
           )}
 
-          <button
-            disabled={submitting || !image}
-            onClick={submit}
-            className="w-full rounded-2xl bg-neutral-900 px-4 py-4 font-serif text-lg text-white shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-neutral-300"
-          >
-            {submitting ? '處理中…' : '送出祝福'}
-          </button>
+          <div className="sticky bottom-0 bg-white pb-4 pt-2 sm:static sm:bg-transparent sm:pb-0 sm:pt-0">
+            <button
+              disabled={submitting || (mode === 'photo' && !image)}
+              onClick={submit}
+              className="w-full rounded-2xl bg-neutral-900 px-4 py-4 font-serif text-lg text-white shadow-sm transition active:scale-[0.99] disabled:cursor-not-allowed disabled:bg-neutral-300"
+            >
+              {submitting ? '處理中…' : '送出祝福'}
+            </button>
+          </div>
 
           {submitStatus === 'error' && (
             <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-600">
               {errorMessage}
             </div>
           )}
-
-          <button
-            type="button"
-            className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-sm text-neutral-500"
-            onClick={() => { window.location.href = '/api/auth/line'; }}
-          >
-            LINE 快速登入，Coming Soon
-          </button>
         </div>
       </section>
     </main>

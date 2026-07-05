@@ -6,11 +6,11 @@ import {
   MAX_LONG_EDGE,
   TARGET_MAX_BYTES,
   getCanvasSize,
-  loadImageFromFile
+  loadImageFromBlob
 } from './imageUtils';
 
-async function renderToCanvas(file: File, maxLongEdge: number) {
-  const img = await loadImageFromFile(file);
+async function renderToCanvas(blob: Blob, maxLongEdge: number) {
+  const img = await loadImageFromBlob(blob);
   const { width, height } = getCanvasSize(img.naturalWidth, img.naturalHeight, maxLongEdge);
 
   const canvas = document.createElement('canvas');
@@ -29,19 +29,19 @@ async function renderToCanvas(file: File, maxLongEdge: number) {
   return { canvas, width, height };
 }
 
-export async function compressImage(file: File): Promise<CompressedImage> {
-  if (!file.type.startsWith('image/')) throw new Error('請選擇圖片檔案');
+export async function compressImage(sourceBlob: Blob): Promise<CompressedImage> {
+  if ('type' in sourceBlob && sourceBlob.type && !sourceBlob.type.startsWith('image/')) throw new Error('請選擇圖片檔案');
 
   const outputType = (await supportsWebp()) ? 'image/webp' : 'image/jpeg';
 
   for (const maxLongEdge of [MAX_LONG_EDGE, FALLBACK_LONG_EDGE]) {
     for (let quality = 0.8; quality >= 0.75 - 0.001; quality -= 0.05) {
-      const { canvas, width, height } = await renderToCanvas(file, maxLongEdge);
-      const blob = await canvasToBlob(canvas, outputType, quality);
-      if (blob.size <= TARGET_MAX_BYTES) {
+      const { canvas, width, height } = await renderToCanvas(sourceBlob, maxLongEdge);
+      const compressed = await canvasToBlob(canvas, outputType, quality);
+      if (compressed.size <= TARGET_MAX_BYTES) {
         return {
-          blob,
-          previewUrl: URL.createObjectURL(blob),
+          blob: compressed,
+          previewUrl: URL.createObjectURL(compressed),
           width,
           height,
           contentType: outputType
@@ -50,12 +50,12 @@ export async function compressImage(file: File): Promise<CompressedImage> {
     }
   }
 
-  const { canvas, width, height } = await renderToCanvas(file, FALLBACK_LONG_EDGE);
-  const blob = await canvasToBlob(canvas, outputType, 0.75);
+  const { canvas, width, height } = await renderToCanvas(sourceBlob, FALLBACK_LONG_EDGE);
+  const compressed = await canvasToBlob(canvas, outputType, 0.75);
 
   return {
-    blob,
-    previewUrl: URL.createObjectURL(blob),
+    blob: compressed,
+    previewUrl: URL.createObjectURL(compressed),
     width,
     height,
     contentType: outputType

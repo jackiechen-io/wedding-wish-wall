@@ -8,22 +8,40 @@ import { getFileSizeLabel, HARD_MAX_UPLOAD_BYTES } from '@/lib/image/imageUtils'
 export async function uploadSubmission(params: {
   nickname: string;
   message: string;
-  previewUrl: string;
-  contentType: 'image/webp' | 'image/jpeg';
-  stickers: Sticker[];
-  previewWidth: number;
-  imageWidth: number;
-  imageHeight: number;
+  blob?: Blob;
+  contentType?: string;
+  imageWidth?: number;
+  imageHeight?: number;
+  previewUrl?: string;
+  stickers?: Sticker[];
+  previewWidth?: number;
   onProgress?: (value: number, text: string) => void;
 }) {
-  params.onProgress?.(20, '正在合成貼圖…');
+  let finalBlob: Blob;
+  let finalContentType: string;
+  let finalWidth: number;
+  let finalHeight: number;
 
-  const finalBlob = await composeImageWithStickers({
-    previewUrl: params.previewUrl,
-    contentType: params.contentType,
-    stickers: params.stickers,
-    previewWidth: params.previewWidth
-  });
+  if (params.blob) {
+    finalBlob = params.blob;
+    finalContentType = params.contentType || 'image/webp';
+    finalWidth = params.imageWidth || 1200;
+    finalHeight = params.imageHeight || 1200;
+  } else {
+    params.onProgress?.(20, '正在合成貼圖…');
+    if (!params.previewUrl || !params.stickers || !params.previewWidth || !params.imageWidth || !params.imageHeight) {
+      throw new Error('Missing required fields for photo submission');
+    }
+    finalBlob = await composeImageWithStickers({
+      previewUrl: params.previewUrl,
+      contentType: params.contentType as 'image/webp' | 'image/jpeg',
+      stickers: params.stickers,
+      previewWidth: params.previewWidth
+    });
+    finalContentType = params.contentType || 'image/jpeg';
+    finalWidth = params.imageWidth;
+    finalHeight = params.imageHeight;
+  }
 
   if (finalBlob.size > HARD_MAX_UPLOAD_BYTES) {
     throw new Error(`圖片過大：${getFileSizeLabel(finalBlob.size)}，請減少貼圖或更換照片`);
@@ -34,7 +52,7 @@ export async function uploadSubmission(params: {
   const uploadUrlRes = await fetch('/api/upload-url', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contentType: params.contentType, fileSize: finalBlob.size })
+    body: JSON.stringify({ contentType: finalContentType, fileSize: finalBlob.size })
   });
 
   if (!uploadUrlRes.ok) throw new Error('取得上傳網址失敗');
@@ -44,7 +62,7 @@ export async function uploadSubmission(params: {
 
   const putRes = await fetch(uploadPayload.uploadUrl, {
     method: 'PUT',
-    headers: { 'Content-Type': params.contentType },
+    headers: { 'Content-Type': finalContentType },
     body: finalBlob
   });
 
@@ -60,10 +78,10 @@ export async function uploadSubmission(params: {
       message: params.message,
       imageKey: uploadPayload.key,
       imageUrl: uploadPayload.publicUrl,
-      contentType: params.contentType,
+      contentType: finalContentType,
       fileSize: finalBlob.size,
-      imageWidth: params.imageWidth,
-      imageHeight: params.imageHeight
+      imageWidth: finalWidth,
+      imageHeight: finalHeight
     })
   });
 

@@ -3,7 +3,9 @@ export type StickerType = 'sticker-1' | 'sticker-2' | 'sticker-3' | 'sticker-4' 
 export type Sticker = {
   id: string;
   type: StickerType;
+  stickerIndex: number;
   x: number;
   y: number;
   size: number;
+  rotation: number;
 };

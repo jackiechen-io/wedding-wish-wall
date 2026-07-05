@@ -35,14 +35,14 @@ export async function composeImageWithStickers(params: {
     try {
       const pngImg = await loadImage(STICKER_PNG[sticker.type]);
       const stickerSize = Math.round(sticker.size * scale);
+      const cx = (sticker.x / 100) * canvas.width;
+      const cy = (sticker.y / 100) * canvas.height;
 
-      ctx.drawImage(
-        pngImg,
-        (sticker.x / 100) * canvas.width - stickerSize / 2,
-        (sticker.y / 100) * canvas.height - stickerSize / 2,
-        stickerSize,
-        stickerSize
-      );
+      ctx.save();
+      ctx.translate(cx, cy);
+      if (sticker.rotation) ctx.rotate((sticker.rotation * Math.PI) / 180);
+      ctx.drawImage(pngImg, -stickerSize / 2, -stickerSize / 2, stickerSize, stickerSize);
+      ctx.restore();
     } catch {
       // skip sticker if image fails to load
     }
