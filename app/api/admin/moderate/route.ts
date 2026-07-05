@@ -18,7 +18,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ message: 'Invalid id or action' }, { status: 400 });
     }
 
-    const update: Record<string, unknown> = { status: action };
+    const statusMap: Record<string, string> = {
+      approve: 'approved',
+      reject: 'rejected',
+      delete: 'deleted',
+    };
+    const update: Record<string, unknown> = { status: statusMap[action] };
 
     if (action === 'approve') {
       update.approved_at = new Date().toISOString();
